@@ -52,21 +52,21 @@ Goals:
 
 ## Features
 
-- ✅ **Health & status endpoints**
-- ✅ **Analyze a single image**  
+- **Health & status endpoints**
+- **Analyze a single image**  
   - Select visual features such as `TAGS`, `CAPTION`, `OBJECTS`, etc.
-- ✅ **Smart cropping (area of interest)**
+- **Smart cropping (area of interest)**
   - Accepts a list of aspect ratios.
   - Validates they’re in Azure’s supported range `[0.75, 1.8]`.
   - Returns a clean list of bounding boxes.
-- ✅ **Batch categorization**
+- **Batch categorization**
   - Takes multiple image URLs.
   - Gets tags from Azure.
   - Groups images by their **highest-confidence tag**.
-- ✅ **Consistent error model**
+- **Consistent error model**
   - `ErrorResponse` with `detail` and optional `error_code`.
   - Typed errors documented in Swagger.
-- ✅ **Swagger examples stored in separate files**
+- **Swagger examples stored in separate files**
   - `docs_http200_examples.py` – success examples.
   - `docs_error_examples.py` – error examples.
 
