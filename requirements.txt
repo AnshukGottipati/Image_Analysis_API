@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-dotenv
+azure-ai-vision-imageanalysis
+pydantic
+azure-core
