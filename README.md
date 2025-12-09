@@ -1,13 +1,4 @@
-Got it, I’ll keep your original structure and tone, just:
 
-* Add Docker setup
-* Remove *Development Notes* and *Future Improvements*
-* Add `curl` examples
-* Lightly tighten wording (but not brutally)
-
-Here’s the updated README:
-
-````md
 # Image Analysis API
 
 FastAPI service that wraps **Azure AI Vision – Image Analysis** to provide:
