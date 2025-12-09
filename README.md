@@ -249,8 +249,6 @@ If these are missing, the app prints a warning and `client` remains `None`. Any 
 
 ### Global response format
 
-Most “business” endpoints use a common wrapper:
-
 ```python
 class AnalysisResult(BaseModel):
     result: Dict
