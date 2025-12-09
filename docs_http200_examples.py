@@ -149,31 +149,40 @@ CATEGORIZE_BATCH_200 = {
             "example": {
                 "result": {
                     "category_map": {
-                        "bird": {
+                        "animal": {
                             "top_tag": {
-                                "name": "bird",
-                                "confidence": 0.987
+                                "name": "animal",
+                                "confidence": 0.9999960064888,
                             },
                             "urls": [
-                                "https://example.com/bird1.jpg",
-                                "https://example.com/bird2.jpg"
-                            ]
+                                "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.australian.museum%2Fmedia%2Fdd%2Fimages%2Fyellow-billed_spoonbill.e943278.width-800.212677d.jpg&f=1&nofb=1&ipt=f13fcb0aea2ca95a792e5e22e20bb7bf99defee9da609d3048e1f23f9521d209",
+                                "https://content.eol.org/data/media/be/38/0e/30.6bf2d9f80954fa23e430abb549403f2c.jpg",
+                                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg/250px-015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg",
+                            ],
                         },
-                        "person": {
+                        "mammal": {
                             "top_tag": {
-                                "name": "person",
-                                "confidence": 0.954
+                                "name": "mammal",
+                                "confidence": 0.9992899894714355,
                             },
                             "urls": [
-                                "https://example.com/human1.jpg"
-                            ]
-                        }
+                                "https://content.eol.org/data/media/be/2e/10/30.324afcc0ad71720c4346a9b46bbaa7e0.jpg",
+                            ],
+                        },
+                        "clothing": {
+                            "top_tag": {
+                                "name": "clothing",
+                                "confidence": 0.9988645315170288,
+                            },
+                            "urls": [
+                                "https://upload.wikimedia.org/wikipedia/commons/6/68/Akha_cropped_hires.JPG",
+                            ],
+                        },
                     },
-                    "failed_images": {
-                        "https://example.com/broken.jpg": "No tags returned by Azure."
-                    }
+                    "failed_images": {},
                 }
             }
         }
     },
 }
+

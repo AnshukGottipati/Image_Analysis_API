@@ -120,10 +120,14 @@ class BatchCategorizeRequest(BaseModel):
     image_urls: List[HttpUrl] = Field(
         ...,
         example=[
-            "https://example.com/image1.jpg",
-            "https://example.com/image2.jpg",
+            "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.australian.museum%2Fmedia%2Fdd%2Fimages%2Fyellow-billed_spoonbill.e943278.width-800.212677d.jpg&f=1&nofb=1&ipt=f13fcb0aea2ca95a792e5e22e20bb7bf99defee9da609d3048e1f23f9521d209",
+            "https://content.eol.org/data/media/be/38/0e/30.6bf2d9f80954fa23e430abb549403f2c.jpg",
+            "https://content.eol.org/data/media/be/2e/10/30.324afcc0ad71720c4346a9b46bbaa7e0.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg/250px-015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg",
+            "https://upload.wikimedia.org/wikipedia/commons/6/68/Akha_cropped_hires.JPG",
         ],
     )
+
 
 # --- Helper Function for Azure Call ---
 
