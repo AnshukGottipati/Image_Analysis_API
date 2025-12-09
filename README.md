@@ -1,6 +1,4 @@
-Here’s a full `README.md` you can drop into the repo and tweak as you like.
 
-````md
 # Image Analysis API
 
 FastAPI service that wraps **Azure AI Vision – Image Analysis** to provide:
