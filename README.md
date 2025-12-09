@@ -1,4 +1,13 @@
+Got it, I’ll keep your original structure and tone, just:
 
+* Add Docker setup
+* Remove *Development Notes* and *Future Improvements*
+* Add `curl` examples
+* Lightly tighten wording (but not brutally)
+
+Here’s the updated README:
+
+````md
 # Image Analysis API
 
 FastAPI service that wraps **Azure AI Vision – Image Analysis** to provide:
@@ -23,15 +32,15 @@ FastAPI service that wraps **Azure AI Vision – Image Analysis** to provide:
    - [Create and configure your `.env`](#create-and-configure-your-env)  
    - [Install dependencies](#install-dependencies)  
    - [Run the API](#run-the-api)  
-6. [Environment Variables](#environment-variables)  
-7. [API Documentation](#api-documentation)  
+6. [Running with Docker](#running-with-docker)  
+7. [Environment Variables](#environment-variables)  
+8. [API Documentation](#api-documentation)  
    - [Global response format](#global-response-format)  
    - [System endpoints](#system-endpoints)  
    - [Image analysis endpoints](#image-analysis-endpoints)  
-8. [Error Handling](#error-handling)  
-9. [Swagger Examples](#swagger-examples)  
-10. [Development Notes](#development-notes)  
-11. [Future Improvements](#future-improvements)
+   - [Curl examples](#curl-examples)  
+9. [Error Handling](#error-handling)  
+10. [Swagger Examples](#swagger-examples)
 
 ---
 
@@ -55,7 +64,6 @@ Goals:
 - ✅ **Health & status endpoints**
 - ✅ **Analyze a single image**  
   - Select visual features such as `TAGS`, `CAPTION`, `OBJECTS`, etc.
-  - Direct wrapper around Azure’s `ImageAnalysisClient.analyze_from_url`.
 - ✅ **Smart cropping (area of interest)**
   - Accepts a list of aspect ratios.
   - Validates they’re in Azure’s supported range `[0.75, 1.8]`.
@@ -96,6 +104,8 @@ Suggested repo layout:
 ├── docs_error_examples.py      # Example error responses for Swagger
 ├── .env.example                # Template for environment variables (no secrets)
 ├── requirements.txt            # Python dependencies
+├── Dockerfile                  # Docker image definition
+├── deploy_docker.sh            # Optional helper script for Docker
 └── README.md                   # This file
 ````
 
@@ -135,8 +145,6 @@ The real `.env` **should not be committed**. It is ignored via `.gitignore`.
    AZURE_KEY="YOUR_REAL_AZURE_KEY_HERE"
    ```
 
-   Make sure the endpoint matches the one from the Azure portal for your Vision resource.
-
 ### Install dependencies
 
 If you’re using a virtual environment (recommended):
@@ -146,13 +154,13 @@ python -m venv .venv
 source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 ```
 
-Install from `requirements.txt` (example):
+Install from `requirements.txt`:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-If you don’t have `requirements.txt` yet, it might look like:
+Typical `requirements.txt`:
 
 ```txt
 fastapi
@@ -166,13 +174,7 @@ azure-ai-vision-imageanalysis
 From the project root:
 
 ```bash
-uvicorn main:app --reload
-```
-
-Or rely on the `if __name__ == "__main__"` block in `main.py`:
-
-```bash
-python main.py
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 By default, the API will be available at:
@@ -180,6 +182,42 @@ By default, the API will be available at:
 * App: `http://localhost:8000/`
 * Swagger UI: `http://localhost:8000/docs`
 * ReDoc: `http://localhost:8000/redoc`
+
+---
+
+## Running with Docker
+
+From the project root (where `Dockerfile` and `.env` live):
+
+### Build
+
+```bash
+sudo docker build -t image-analysis-api:latest .
+```
+
+### Run
+
+```bash
+sudo docker run -d \
+  --name image-analysis-api \
+  -p 8000:8000 \
+  --env-file .env \
+  image-analysis-api:latest
+```
+
+Now reachable at:
+
+* `http://localhost:8000` (local)
+* `http://YOUR_DROPLET_IP:8000` (remote)
+
+If you use `deploy_docker.sh`:
+
+```bash
+chmod +x deploy_docker.sh
+./deploy_docker.sh
+```
+
+This script builds the image and runs the container with `.env` automatically.
 
 ---
 
@@ -199,7 +237,7 @@ AZURE_KEY = os.getenv("AZURE_KEY")
 ### Required
 
 * `AZURE_ENDPOINT`
-  Your Azure AI Vision endpoint, for example:
+  Example:
   `https://<your-resource-name>.cognitiveservices.azure.com/`
 
 * `AZURE_KEY`
@@ -227,7 +265,9 @@ class AnalysisResult(BaseModel):
     result: Dict
 ```
 
-The exact shape inside `result` depends on the endpoint/Azure response, but a **real example** for each is wired into Swagger via `docs_http200_examples.py`.
+The exact shape inside `result` depends on the endpoint/Azure response, but real examples for each are wired into Swagger via `docs_http200_examples.py`.
+
+---
 
 ### System endpoints
 
@@ -251,18 +291,6 @@ class RootResponse(BaseModel):
   "message": "Image Intelligence API is running. Check /docs for endpoints."
 }
 ```
-
-* **Errors**:
-
-  * `500` – unexpected server error
-    Example (documented in Swagger):
-
-    ```json
-    {
-      "detail": "Internal server error.",
-      "error_code": "INTERNAL_SERVER_ERROR"
-    }
-    ```
 
 #### `GET /health`
 
@@ -288,14 +316,8 @@ class HealthResponse(BaseModel):
 `azure_configured` is `true` only if:
 
 * `AZURE_ENDPOINT` is set
-
 * `AZURE_KEY` is set
-
 * Azure client initialized successfully
-
-* **Errors**:
-
-  * `500` – unexpected server error (same shape as above)
 
 ---
 
@@ -320,9 +342,10 @@ class VisualFeatureName(str, Enum):
 class AnalyzeFeatures(BaseModel):
     image_url: HttpUrl
     features: List[VisualFeatureName]
+}
 ```
 
-* Example request:
+* **Example request:**
 
 ```json
 {
@@ -331,14 +354,7 @@ class AnalyzeFeatures(BaseModel):
 }
 ```
 
-Internally, the enum values are mapped to Azure’s `VisualFeatures`:
-
-```python
-features_to_use = [VisualFeatures[f.value] for f in request.features]
-```
-
-* **Success response** (`200` – wrapped in `AnalysisResult`):
-  Example (from a real Azure call) is defined in `ANALYZE_IMAGE_200`:
+* **Example response (truncated):**
 
 ```json
 {
@@ -354,28 +370,13 @@ features_to_use = [VisualFeatures[f.value] for f in request.features]
     },
     "tagsResult": {
       "values": [
-        { "name": "mammal", "confidence": 0.9999 },
-        { "name": "animal", "confidence": 0.9998 },
-        { "name": "dinosaur", "confidence": 0.9979 }
-        // ...
+        { "name": "mammal", "confidence": 0.9998923540115356 },
+        { "name": "animal", "confidence": 0.9998763799667358 },
+        { "name": "reptile", "confidence": 0.9995557069778442 }
       ]
     }
   }
 }
-```
-
-* **Errors**:
-
-  * `400` – invalid features (e.g., unsupported visual feature)
-  * `500` – unexpected server error
-  * `503` – Azure Image Analysis failure (network, invalid URL, Azure-side error)
-
-All errors share the `ErrorResponse` model:
-
-```python
-class ErrorResponse(BaseModel):
-    detail: str
-    error_code: str | None = None
 ```
 
 ---
@@ -392,7 +393,7 @@ class CroppingRequest(BaseModel):
     aspect_ratios: List[float]  # must be between 0.75 and 1.8
 ```
 
-* Aspect ratio validation:
+Aspect ratios are validated:
 
 ```python
 aspect_ratios_float = [float(ar) for ar in request.aspect_ratios]
@@ -411,12 +412,12 @@ if invalid:
 
 ```json
 {
-  "image_url": "https://example.com/image.jpg",
+  "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tyrannosaurus_Rex_Holotype.jpg/2560px-Tyrannosaurus_Rex_Holotype.jpg",
   "aspect_ratios": [0.9, 1.33, 1.0]
 }
 ```
 
-* **Success response** (`200`, from `CROP_AREA_OF_INTEREST_200` example):
+* **Example response:**
 
 ```json
 {
@@ -431,19 +432,13 @@ if invalid:
         "bounding_box": { "x": 0, "y": 0, "width": 2249, "height": 1689 }
       },
       {
-        "aspect_ratio": 1.0,
+        "aspect_ratio": 1,
         "bounding_box": { "x": 120, "y": 0, "width": 1689, "height": 1689 }
       }
     ]
   }
 }
 ```
-
-* **Errors**:
-
-  * `400` – invalid aspect ratio (outside `[0.75, 1.8]`)
-  * `500` – Azure client not initialized
-  * `503` – Smart Crops call to Azure failed
 
 ---
 
@@ -458,65 +453,137 @@ class BatchCategorizeRequest(BaseModel):
     image_urls: List[HttpUrl]
 ```
 
-* **Behavior**:
+* **Example request:**
 
-  * For each image:
+```json
+{
+  "image_urls": [
+    "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.australian.museum%2Fmedia%2Fdd%2Fimages%2Fyellow-billed_spoonbill.e943278.width-800.212677d.jpg&f=1&nofb=1&ipt=f13fcb0aea2ca95a792e5e22e20bb7bf99defee9da609d3048e1f23f9521d209",
+    "https://content.eol.org/data/media/be/38/0e/30.6bf2d9f80954fa23e430abb549403f2c.jpg",
+    "https://content.eol.org/data/media/be/2e/10/30.324afcc0ad71720c4346a9b46bbaa7e0.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg/250px-015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg",
+    "https://upload.wikimedia.org/wikipedia/commons/6/68/Akha_cropped_hires.JPG"
+  ]
+}
+```
 
-    * Calls `analyze_from_url(..., visual_features=[VisualFeatures.TAGS])`
-    * Picks `max(analysis.tags.list, key=lambda t: t.confidence)`
-    * Adds the URL to `category_map[tag_name]["urls"]`
-  * If there are no tags or Azure fails for that image, the URL is added to `failed_images`.
-
-* **Response shape** (`200`):
+* **Example response:**
 
 ```json
 {
   "result": {
     "category_map": {
-      "bird": {
-        "top_tag": { "name": "bird", "confidence": 0.987 },
-        "urls": ["https://example.com/bird1.jpg", "https://example.com/bird2.jpg"]
+      "animal": {
+        "top_tag": {
+          "name": "animal",
+          "confidence": 0.9999960064888
+        },
+        "urls": [
+          "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.australian.museum%2Fmedia%2Fdd%2Fimages%2Fyellow-billed_spoonbill.e943278.width-800.212677d.jpg&f=1&nofb=1&ipt=f13fcb0aea2ca95a792e5e22e20bb7bf99defee9da609d3048e1f23f9521d209",
+          "https://content.eol.org/data/media/be/38/0e/30.6bf2d9f80954fa23e430abb549403f2c.jpg",
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg/250px-015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg"
+        ]
       },
-      "person": {
-        "top_tag": { "name": "person", "confidence": 0.954 },
-        "urls": ["https://example.com/human1.jpg"]
+      "mammal": {
+        "top_tag": {
+          "name": "mammal",
+          "confidence": 0.9992899894714355
+        },
+        "urls": [
+          "https://content.eol.org/data/media/be/2e/10/30.324afcc0ad71720c4346a9b46bbaa7e0.jpg"
+        ]
+      },
+      "clothing": {
+        "top_tag": {
+          "name": "clothing",
+          "confidence": 0.9988645315170288
+        },
+        "urls": [
+          "https://upload.wikimedia.org/wikipedia/commons/6/68/Akha_cropped_hires.JPG"
+        ]
       }
     },
-    "failed_images": {
-      "https://example.com/broken.jpg": "Analysis failed: <azure-error>"
-    }
+    "failed_images": {}
   }
 }
 ```
 
-* **Errors**:
+---
 
-  * `500` – Azure client not initialized
-  * `503` – (reserved/documented for use if you ever decide to fail the whole batch on Azure issues; currently per-image errors are captured in `failed_images`)
+### Curl examples
+
+Replace `localhost` with `YOUR_DROPLET_IP` if needed.
+
+**Root**
+
+```bash
+curl http://localhost:8000/
+```
+
+**Health**
+
+```bash
+curl http://localhost:8000/health
+```
+
+**Analyze Image**
+
+```bash
+curl -X POST "http://localhost:8000/analyze_image" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tyrannosaurus_Rex_Holotype.jpg/2560px-Tyrannosaurus_Rex_Holotype.jpg",
+    "features": ["TAGS", "CAPTION"]
+  }'
+```
+
+**Smart Crop**
+
+```bash
+curl -X POST "http://localhost:8000/crop_area_of_interest" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tyrannosaurus_Rex_Holotype.jpg/2560px-Tyrannosaurus_Rex_Holotype.jpg",
+    "aspect_ratios": [0.9, 1.33, 1.0]
+  }'
+```
+
+**Batch Categorize**
+
+```bash
+curl -X POST "http://localhost:8000/categorize_batch" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_urls": [
+      "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.australian.museum%2Fmedia%2Fdd%2Fimages%2Fyellow-billed_spoonbill.e943278.width-800.212677d.jpg&f=1&nofb=1&ipt=f13fcb0aea2ca95a792e5e22e20bb7bf99defee9da609d3048e1f23f9521d209",
+      "https://content.eol.org/data/media/be/38/0e/30.6bf2d9f80954fa23e430abb549403f2c.jpg",
+      "https://content.eol.org/data/media/be/2e/10/30.324afcc0ad71720c4346a9b46bbaa7e0.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg/250px-015_Chimpanzee_at_Kibale_forest_National_Park_Photo_by_Giles_Laurent.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/6/68/Akha_cropped_hires.JPG"
+    ]
+  }'
+```
 
 ---
 
 ## Error Handling
 
-All custom errors surface through `HTTPException` with a consistent body:
+All custom errors use:
 
 ```python
 class ErrorResponse(BaseModel):
     detail: str
     error_code: str | None = None
+
 ```
 
 Common patterns:
 
-* Invalid input → `400`
-* Misconfiguration / unexpected bugs → `500`
-* Azure service issues → `503`
+* `400` – invalid input (bad features, bad aspect ratios, etc.)
+* `500` – misconfiguration or unexpected server error
+* `503` – Azure service issues (network, invalid URL, Azure-side errors)
 
-Examples are defined in `docs_error_examples.py` and wired into the `responses={...}` parameter on each route, so Swagger clearly shows:
-
-* Expected status codes
-* Example error payloads
-* The shared `ErrorResponse` schema
+Examples are defined in `docs_error_examples.py` and referenced in each route’s `responses={...}` parameter so Swagger shows expected error payloads.
 
 ---
 
@@ -526,63 +593,13 @@ Success examples (HTTP 200) are kept in:
 
 * `docs_http200_examples.py`
 
-For example:
-
-```python
-ANALYZE_IMAGE_200 = {
-    "description": "Image analyzed successfully",
-    "content": {
-        "application/json": {
-            "example": {
-                "result": {
-                    "modelVersion": "2023-10-01",
-                    "captionResult": { ... },
-                    "metadata": { ... },
-                    "tagsResult": { ... }
-                }
-            }
-        }
-    },
-}
-```
-
 Error examples are kept in:
 
 * `docs_error_examples.py`
 
-For example:
+These are plugged into FastAPI route definitions using the `responses` argument, so the docs show realistic sample payloads for both success and failure cases.
 
-```python
-ANALYZE_IMAGE_400 = {
-    "description": "Bad request – invalid features or input.",
-    "content": {
-        "application/json": {
-            "example": {
-                "detail": "Invalid visual feature name provided: 'FOO'."
-            }
-        }
-    },
-}
+Accessing the Swagger UI:
 ```
-
-This keeps your `main.py` clean while still having rich Swagger docs.
-
----
-
-## Development Notes
-
-* The Azure client is created once at startup if `AZURE_ENDPOINT` and `AZURE_KEY` are set.
-  If initialization fails, the client is left as `None` and endpoints will respond with a 500 error.
-* Logging is currently via simple `print(...)` statements. You may want to replace these with Python’s `logging` module for production usage.
-
----
-
-## Future Improvements
-
-Some potential enhancements:
-
-* Add authentication / API keys for clients.
-* Add proper rate limiting (per IP or per API key) in front of the app or via middleware.
-* Add more detailed domain-specific `error_code` values per error.
-* Add unit / integration tests (e.g., using `httpx` and `pytest`).
-* Add Dockerfile and containerization instructions.
+http://localhost:8000/docs
+```
