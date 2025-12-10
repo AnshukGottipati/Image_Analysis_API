@@ -315,6 +315,7 @@ class HealthResponse(BaseModel):
 #### `POST /analyze_image`
 
 Performs general image analysis with selected visual features.
+Valid
 
 * **Request model**: `AnalyzeFeatures`
 
@@ -367,6 +368,17 @@ class AnalyzeFeatures(BaseModel):
   }
 }
 ```
+* **Valid features(only the 4.0v feature are valid):**
+   * **Caption** – Generate a natural-language description of the whole image.
+   * **DenseCaptions** – Generate short descriptions for multiple regions/objects in the image.
+   * **Objects** – Detect objects in the image and return their locations (bounding boxes).
+   * **Read** – Extract text (OCR) from the image.
+   * **Tags** – Assign keyword-style labels describing content in the image.
+   * **People** – Detect people in the image and return their locations.
+   * **SmartCrops** – Suggest the best crop region for a given aspect ratio.
+* Descriptive Sources: https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview-image-analysis?tabs=4-0
+
+
 
 ---
 
